@@ -32,6 +32,9 @@ class UserSerializer(serializers.ModelSerializer):
                 'department_display': profile.get_department_display(),
                 'photo': photo_url,
                 'full_name': profile.get_full_name(),
+                'has_admin_access': profile.has_admin_access(),
+                'has_technician_access': profile.has_technician_access(),
+                'can_manage_incidents': profile.can_manage_incidents(),
             }
         except Profile.DoesNotExist:
             return None

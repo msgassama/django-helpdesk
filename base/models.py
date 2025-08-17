@@ -48,4 +48,7 @@ class Profile(models.Model):
     def has_technician_access(self):
         return self.role in ['technician', 'manager', 'admin'] or self.user.is_superuser
     
+    def can_manage_incidents(self):
+        return self.role in ['manager', 'admin'] or self.user.is_superuser
+    
 
