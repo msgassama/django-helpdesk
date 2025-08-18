@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from .serializers import UserSerializer, UserCreateSerializer, ProfileSerializer
+from .permissions import UserCRUDPermission
 from base.models import Profile
 
 
@@ -31,8 +32,13 @@ def getRoutes(request):
 
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated, UserCRUDPermission])
 def user_list_create(request):
     if request.method == 'GET':
+        # Vérifier permission pour voir la liste (technicien+ seulement)
+        if not request.user.profile.has_technician_access():
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+        
         users = User.objects.all().select_related('profile')
         serializer = UserSerializer(users, many=True, context={'request': request})
         return Response(serializer.data)
@@ -50,8 +56,14 @@ def user_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated, UserCRUDPermission])
 def user_detail(request, pk):
     user = get_object_or_404(User.objects.select_related('profile'), pk=pk)
+    
+    # Vérification des permissions sur l'objet spécifique
+    permission = UserCRUDPermission()
+    if not permission.has_object_permission(request, None, user):
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
     
     if request.method == 'GET':
         serializer = UserSerializer(user, context={'request': request})
